@@ -21,7 +21,7 @@ def create_row_content(row, df_columns):
 def convert_embeddings_to_dict(embeddings):
     return [{f"vector": emb} for i, emb in enumerate(embeddings)]
 
-@st.cache_data
+st.cache_data(ttl=180)
 def get_embeddings_for_row_content(model_name: str, _PAT, row_content):
     try:
         model_obj = Model(model_name, pat =_PAT)

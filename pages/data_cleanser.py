@@ -28,7 +28,7 @@ st.markdown("""
 </style>""", unsafe_allow_html=True)
 
 st.markdown(
-    "<h1 style='text-align: center; color: black;'> Data leaning & Anomaly detection Assistance using LLM 📂</h1>",
+    "<h1 style='text-align: center; color: black;'> Data cleaning & Anomaly detection Assistance using LLM 📂</h1>",
     unsafe_allow_html=True,
 )
 st.markdown(
@@ -60,9 +60,7 @@ if uploaded_files and st.session_state["config"] :
         st.write("No missing values in the data")
         marker = st.toggle("Compute embeddings for outlier visualization")
         if marker:
-            embeddings = get_embeddings_for_row_content(embedding_model, PAT, df['row_content'].tolist())
-            df['embeddings'] = embeddings
-            vector_dict = convert_embeddings_to_dict(embeddings)
+            
             
             with st.form(key='clusters-app'):
                 set_flag= False
@@ -75,8 +73,13 @@ if uploaded_files and st.session_state["config"] :
                 #ingest_input = run_async_function(insert_inputs_embeddings_to_clarifai, df['row_content'].tolist(), vector_dict, PAT, APP_ID)
                 
                 if submitted:
-                    reduced_dim_list=get_umap_embedding(embeddings, int(umap_n_neighbours),umap_min)
-                    df_reduced_dim=pd.DataFrame(reduced_dim_list,columns=['x','y'])
+                    with st.spinner("Computing embeddings"):
+                        embeddings = get_embeddings_for_row_content(embedding_model, PAT, df['row_content'].tolist())
+                        df['embeddings'] = embeddings
+                        vector_dict = convert_embeddings_to_dict(embeddings)
+                    with st.spinner("Reducing dimensions with UMAP..."):
+                        reduced_dim_list=get_umap_embedding(embeddings, int(umap_n_neighbours),umap_min)
+                        df_reduced_dim=pd.DataFrame(reduced_dim_list,columns=['x','y'])
                     with st.spinner('clustering with DBSCAN...'):
                         X = StandardScaler().fit_transform(reduced_dim_list)
                         dbscan = DBSCAN(eps=float(cluster_min_distance), min_samples=cluster_min_samples)

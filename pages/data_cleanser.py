@@ -34,15 +34,15 @@ st.markdown(
 st.markdown(
     "![Clarifai logo](https://www.clarifai.com/hs-fs/hubfs/logo/Clarifai/clarifai-740x150.png?width=180)"
 )
-st.markdown("**upload your files here**")
+
 uploaded_files = st.file_uploader(
                 "_", accept_multiple_files=False, label_visibility="hidden")
 
 with st.sidebar:
-    embedding_model = st.text_input("Enter Embedding model community URL", key="model_url")
-    no_nns = st.number_input("Enter number of nearest neighbours", key="no_nns", min_value=3, max_value=25)
-    no_of_trees = st.number_input("Enter number of trees for Annoy tree", key="no_of_trees", min_value=10, max_value=1000)
-    metric_cal =  st.selectbox("Select metric for Annoy tree,", ["euclidean", "angular", "manhattan", "dot"], key="metric")
+    embedding_model = st.text_input("**Enter Embedding model community URL**", key="model_url")
+    no_nns = st.number_input("**Enter number of nearest neighbours**", key="no_nns", min_value=3, max_value=25)
+    no_of_trees = st.number_input("**Enter number of trees for Annoy tree**", key="no_of_trees", min_value=10, max_value=1000)
+    metric_cal =  st.selectbox("**Select metric for Annoy tree,**", ["euclidean", "angular", "manhattan", "dot"], key="metric")
     if "config" not in st.session_state.keys():
       st.session_state["config"] = True
 
@@ -60,16 +60,14 @@ if uploaded_files and st.session_state["config"] :
         st.write("No missing values in the data")
         marker = st.toggle("Compute embeddings for outlier visualization")
         if marker:
-            
-            
             with st.form(key='clusters-app'):
                 set_flag= False
-                umap_n_neighbours=st.slider('No of neighbours :', 2, 100)
-                umap_min = st.text_input('Minimum distance for UMAP:', 0.5)
+                umap_n_neighbours=st.slider('**No of neighbours ([See more](https://pair-code.github.io/understanding-umap/)**) :', 2, 100)
+                umap_min = st.text_input('**Minimum distance for UMAP [See more](https://pair-code.github.io/understanding-umap/):**', 0.5)
                 
-                cluster_min_samples = st.slider('Min Samples (No of samples to be considered as cluster in DBSACN):', 3, 100, 5)
-                cluster_min_distance = st.text_input('Epsilon (min distance ):', 0.5)
-                submitted = st.form_submit_button('Begin clustering!')
+                cluster_min_samples = st.slider('**Min Samples (No of samples to be considered as cluster in DBSACN [See more](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.HDBSCAN.html)):**', 3, 100, 5)
+                cluster_min_distance = st.text_input('**Epsilon (min distance) [See more](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.HDBSCAN.html):**', 0.5)
+                submitted = st.form_submit_button('**Begin clustering!**')
                 #ingest_input = run_async_function(insert_inputs_embeddings_to_clarifai, df['row_content'].tolist(), vector_dict, PAT, APP_ID)
                 
                 if submitted:
@@ -106,18 +104,12 @@ if uploaded_files and st.session_state["config"] :
             # Concatenate the two dataframes
             st.write("##")
             data = pd.concat([pre_compute, post_compute], axis=1, keys=['pre_compute', 'post_compute'])
+            st.write("**Processed values before and after imputation**")
+            st.write(data)
             # Display the plot in streamlit
             st.bar_chart(data, color=["#FF0000", "#0000FF"] )
             
             st.write("#")
             download_csv(df)
-            
-
-            
-        
-        
-        
-    
-    
 
 

@@ -5,13 +5,9 @@ from sklearn.preprocessing import StandardScaler
 from clarifai.modules.css import ClarifaiStreamlitCSS
 from utils import *
 
-
-
 st.set_page_config(layout="wide")
 ClarifaiStreamlitCSS.insert_default_css(st)
 
-query_params = st.experimental_get_query_params()
-PAT = query_params["pat"][0] if "pat" in query_params.keys() else st.secrets["pat"]
 #model = https://clarifai.com/clarifai/main/models/BAAI-bge-base-en
 st.markdown("""
 <style>
@@ -36,12 +32,15 @@ uploaded_files = st.file_uploader(
                 "_", accept_multiple_files=False, label_visibility="hidden")
 
 with st.sidebar:
+    clarifai_pat = st.text_input("**Enter your clarifai PAT**", type="password")
     embedding_model = st.text_input("**Enter Embedding model community URL**", key="model_url")
     no_nns = st.number_input("**Enter number of nearest neighbours**", key="no_nns", min_value=3, max_value=25)
     no_of_trees = st.number_input("**Enter number of trees for Annoy tree**", key="no_of_trees", min_value=10, max_value=1000)
     metric_cal =  st.selectbox("**Select metric for Annoy tree,**", ["euclidean", "angular", "manhattan", "dot"], key="metric")
+    PAT = clarifai_pat
     if "config" not in st.session_state.keys():
       st.session_state["config"] = True
+        
 
 if "compute" not in st.session_state.keys():
     st.session_state["compute"] = False

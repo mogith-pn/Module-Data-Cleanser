@@ -51,15 +51,22 @@ if "compute" not in st.session_state.keys():
     
 if uploaded_files and st.session_state["config"] :
     df=pd.read_csv(uploaded_files)
+    st.write("**Preview of dataframe**")
+    st.write(df.head(5))
     pre_compute = df.nunique()
     df['row_content'] = df.apply(lambda row: create_row_content(row, df.columns), axis=1)
     if df.isnull().values.any():
         st.session_state["compute"] = True
-    
+
     else:
         st.write("No missing values in the data")
-        marker = st.toggle("Compute embeddings for outlier visualization")
-        if marker:
+        if "embeddings" not in st.session_state.keys():
+            with st.spinner("Computing embeddings"):
+                embeddings = get_embeddings_for_row_content(embedding_model, PAT, df['row_content'].tolist())
+            st.session_state["embeddings"] = embeddings
+        marker = st.toggle("Detect and visualize anomaly")
+
+        if marker and st.session_state["embeddings"]:
             with st.form(key='clusters-app'):
                 set_flag= False
                 umap_n_neighbours=st.slider('**No of neighbours ([See more](https://pair-code.github.io/understanding-umap/)**) :', 2, 100)
@@ -70,31 +77,31 @@ if uploaded_files and st.session_state["config"] :
                 submitted = st.form_submit_button('**Begin clustering!**')
                 #ingest_input = run_async_function(insert_inputs_embeddings_to_clarifai, df['row_content'].tolist(), vector_dict, PAT, APP_ID)
                 
-                if submitted:
-                    with st.spinner("Computing embeddings"):
-                        embeddings = get_embeddings_for_row_content(embedding_model, PAT, df['row_content'].tolist())
-                        df['embeddings'] = embeddings
-                        vector_dict = convert_embeddings_to_dict(embeddings)
-                    with st.spinner("Reducing dimensions with UMAP..."):
-                        reduced_dim_list=get_umap_embedding(embeddings, int(umap_n_neighbours),umap_min)
-                        df_reduced_dim=pd.DataFrame(reduced_dim_list,columns=['x','y'])
-                    with st.spinner('clustering with DBSCAN...'):
-                        X = StandardScaler().fit_transform(reduced_dim_list)
-                        dbscan = DBSCAN(eps=float(cluster_min_distance), min_samples=cluster_min_samples)
-                        df['cluster'] = dbscan.fit_predict(X)
-                        df_reduced_dim["cluster"]=df['cluster'].values.tolist()
-                        st.scatter_chart(df_reduced_dim, x='x', y='y', color = 'cluster')
-                        set_flag = True
+            if submitted:
+                df['embeddings'] = st.session_state["embeddings"]
+                with st.spinner("Reducing dimensions with UMAP..."):
+                    reduced_dim_list=get_umap_embedding(st.session_state["embeddings"], int(umap_n_neighbours),umap_min)
+                    df_reduced_dim=pd.DataFrame(reduced_dim_list,columns=['x','y'])
+                with st.spinner('clustering with DBSCAN...'):
+                    X = StandardScaler().fit_transform(reduced_dim_list)
+                    dbscan = DBSCAN(eps=float(cluster_min_distance), min_samples=cluster_min_samples)
+                    df['cluster'] = dbscan.fit_predict(X)
+                    df_reduced_dim["cluster"]=df['cluster'].values.tolist()
+                    st.scatter_chart(df_reduced_dim, x='x', y='y', color = 'cluster')
+                    set_flag = True
             if set_flag:
                 download_csv(df)
 
-    if st.session_state["compute"]:
-        
+    if ("embeddings" not in st.session_state.keys()):
         with st.spinner("Computing embeddings"):
             embeddings = get_embeddings_for_row_content(embedding_model, PAT, df['row_content'].tolist())
-            df['embeddings'] = embeddings
+        st.session_state["embeddings"] = embeddings
+    
+    if st.session_state["compute"] and st.session_state["embeddings"] :
+        with st.spinner("Computing ANNOY index"):
+            df['embeddings'] = st.session_state["embeddings"]
             df["nearest_neighbours"] = 0.0
-            vector_dict = np.array(embeddings)
+            vector_dict = np.array(st.session_state["embeddings"])
             search_index = build_annoy_tree(vector_dict, metric_cal, no_of_trees)
             df =  find_nearest_neighbour(df, search_index, no_nns)
             df.drop(columns=["row_content","embeddings"], inplace=True)

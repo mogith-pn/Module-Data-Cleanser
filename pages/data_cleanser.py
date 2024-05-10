@@ -11,10 +11,7 @@ st.set_page_config(layout="wide")
 ClarifaiStreamlitCSS.insert_default_css(st)
 
 query_params = st.experimental_get_query_params()
-PAT = query_params["pat"][0] if "pat" in query_params.keys() else None
-USER_ID = query_params["user_id"][0] if "user_id" in query_params.keys() else None
-APP_ID = query_params["app_id"][0] if "app_id" in query_params.keys() else None
-
+PAT = query_params["pat"][0] if "pat" in query_params.keys() else st.secrets["pat"]
 #model = https://clarifai.com/clarifai/main/models/BAAI-bge-base-en
 st.markdown("""
 <style>

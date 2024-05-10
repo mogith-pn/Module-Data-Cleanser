@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 from clarifai.modules.css import ClarifaiStreamlitCSS
-from utils import *
+from utils.utils import *
 
 st.set_page_config(layout="wide")
 ClarifaiStreamlitCSS.insert_default_css(st)
